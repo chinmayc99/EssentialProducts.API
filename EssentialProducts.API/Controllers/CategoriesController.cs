@@ -1,0 +1,105 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Core;
+using Data;
+
+namespace EssentialProducts.API.Controllers
+{
+    [Route("api/[controller]")]
+    [ApiController]
+    public class CategoriesController : ControllerBase
+    {
+        private readonly EssentialProductDbContext _context;
+
+        public CategoriesController(EssentialProductDbContext context)
+        {
+            _context = context;
+        }
+
+        // GET: api/Categories
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<Category>>> GetCategory()
+        {
+            return await _context.Category.ToListAsync();
+        }
+
+        // GET: api/Categories/5
+        [HttpGet("{id}")]
+        public async Task<ActionResult<Category>> GetCategory(short id)
+        {
+            var category = await _context.Category.FindAsync(id);
+
+            if (category == null)
+            {
+                return NotFound();
+            }
+
+            return category;
+        }
+
+        // PUT: api/Categories/5
+        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+        [HttpPut("{id}")]
+        public async Task<IActionResult> PutCategory(short id, Category category)
+        {
+            var entityInDb = await _context.Category.FindAsync(id);
+            if (entityInDb == null)
+            {
+                return NotFound($"Category with ID {id} not found.");
+            }
+
+            // Update properties
+            entityInDb.Name = category.Name;
+
+            // Save changes
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                return StatusCode(500, "A concurrency issue occurred while updating the category.");
+            }
+
+            // Return updated entity
+            return Ok(entityInDb);
+        }
+
+        // POST: api/Categories
+        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+        [HttpPost]
+        public async Task<ActionResult<Category>> PostCategory(Category category)
+        {
+            _context.Category.Add(category);
+            await _context.SaveChangesAsync();
+
+            return CreatedAtAction("GetCategory", new { id = category.Id }, category);
+        }
+
+        // DELETE: api/Categories/5
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteCategory(short id)
+        {
+            var category = await _context.Category.FindAsync(id);
+            if (category == null)
+            {
+                return NotFound();
+            }
+
+            _context.Category.Remove(category);
+            await _context.SaveChangesAsync();
+
+            return NoContent();
+        }
+
+        private bool CategoryExists(short id)
+        {
+            return _context.Category.Any(e => e.Id == id);
+        }
+    }
+}
